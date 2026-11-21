@@ -457,7 +457,6 @@ $('info').onclick=()=>{
   openPanel('Paytable and rules','<p>Match a paying symbol from reel one across at least three consecutive reels. Each position combination pays. Wild multipliers add within each way.</p><table><thead><tr><th>Symbol</th><th>3 reels</th><th>4 reels</th><th>5 reels</th><th>6 reels</th></tr></thead><tbody>'+values+'</tbody></table><p>Exactly 3 UFO scatters trigger Regular Bonus. Exactly 4 trigger Super Bonus. 5 or more trigger Super Super Bonus. Every tier starts with 8 free spins. Removing a winning position in free spins adds one Chaos Point. At 12, 30, 55, 85 and 120 points, earn two free spins and a Wild Drop. Super Super Bonus has a 100× minimum bonus payout. Super Super stage four has a '+(config.surge.chance*100).toFixed(2)+'% chance to drop '+config.surge.min+'–'+config.surge.max+' actual ×35 wilds when reached. The full round has a 50,000× ceiling.</p>'+dropTable);
 };
 let pendingBuy;
-const exactCredits=value=>(value/10000).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:4});
 function clearBuy(){
   pendingBuy=null;
   $('buy-cards').hidden=false;
@@ -471,7 +470,7 @@ $('buy-open').onclick=()=>{
   if(state!=='ready')return;
   autoplay=0; controls(); clearBuy();
   const latest=readWallet()??wallet;
-  $('buy-wallet').textContent='Stake '+money(latest.stake*100)+' credits · Available '+exactCredits(latest.balance)+' credits';
+  $('buy-wallet').textContent='Stake '+money(latest.stake*100)+' credits · Available '+money(latest.balance)+' credits';
   $('buy-cards').replaceChildren(...buyOptions.map(option=>{
     const quote=quoteBuy(option.id,latest.stake);
     const card=document.createElement('article');
@@ -482,7 +481,7 @@ $('buy-open').onclick=()=>{
       option.tier===0?'Direct entry to the three-scatter feature.':
       option.tier===1?'Direct entry to the four-scatter feature.':
       'Regular '+chance(regular)+' · Super '+chance(superBonus)+' · Super Super '+chance(superSuper)
-    )+'</p><span class="buy-spins">8 STARTING FREE SPINS</span><strong>'+exactCredits(quote.cost)+' credits</strong><small>'+ (quote.priceBasis/100).toFixed(2)+'× stake</small>';
+    )+'</p><span class="buy-spins">8 STARTING FREE SPINS</span><strong>'+money(quote.cost)+' credits</strong><small>'+ quote.multiplier+'× stake</small>';
     card.querySelector('img').src=assetFile('assets/symbols-v2/'+option.art+'.png');
     const choose=Object.assign(document.createElement('button'),{className:'buy-launch',textContent:'Choose '+option.name,disabled:latest.balance<quote.cost});
     if(choose.disabled)card.insertAdjacentHTML('beforeend','<small>Insufficient fictional credits</small>');
@@ -490,7 +489,7 @@ $('buy-open').onclick=()=>{
       pendingBuy=quote;
       $('buy-cards').hidden=true;
       $('buy-confirmation').hidden=false;
-      $('buy-quote').textContent='Spend '+exactCredits(quote.cost)+' fictional credits on '+option.name+'? The feature starts with 8 free spins.';
+      $('buy-quote').textContent='Spend '+money(quote.cost)+' fictional credits on '+option.name+'? The feature starts with 8 free spins.';
       $('buy-back').focus();
     };
     card.append(choose);

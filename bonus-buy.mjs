@@ -1,10 +1,8 @@
 import {random, resolve} from './engine.mjs';
 
 export const buyProfile = Object.freeze({
-  id:'experimental-1',
-  targetBasis:9600,
-  // V2 isolated simulations, in hundredths of a stake.
-  featureMeans:[7879.279748,13774.054883,32905.758599],
+  id:'koala-matched-1',
+  multipliers:Object.freeze({regular:100,super:300,mystery:500}),
   mysteryWeights:[81,16,3]
 });
 export const buyOptions = [
@@ -24,14 +22,11 @@ export function chooseMystery(roll,weights=buyProfile.mysteryWeights){
 export function quoteBuy(id,stake){
   const option=buyOptions.find(item=>item.id===id);
   if(!option||!Number.isSafeInteger(stake)||stake<=0)throw Error('Invalid buy quote');
-  const weights=buyProfile.mysteryWeights;
-  const mean=option.tier===null
-    ? weights.reduce((sum,w,i)=>sum+w*buyProfile.featureMeans[i],0)/weights.reduce((sum,w)=>sum+w,0)
-    : buyProfile.featureMeans[option.tier];
-  const priceBasis=Math.ceil(mean*10000/buyProfile.targetBasis);
+  const multiplier=buyProfile.multipliers[id];
+  const priceBasis=multiplier*100;
   const cost=priceBasis*stake;
   if(!Number.isSafeInteger(cost))throw Error('Invalid buy cost');
-  return {id,stake,cost,priceBasis,mean};
+  return {id,stake,cost,priceBasis,multiplier};
 }
 
 export function resolvePurchase(seed,id,{trace=true,rules}={}){
