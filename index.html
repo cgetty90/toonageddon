@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#100728">
+<title>Toonageddon</title>
+<link rel="preload" as="image" href="assets/logo.jpg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="game" aria-label="Toonageddon">
+  <div class="stars" aria-hidden="true"></div>
+  <header>
+    <div class="topline"><span class="mode"><i></i> FICTIONAL CREDITS · V4</span><button id="settings" aria-label="Settings" class="small">☰</button></div>
+    <h1><img src="assets/logo.jpg" alt="Toonageddon"></h1>
+    <div id="mode" class="modeplate">BASE GAME</div>
+  </header>
+  <div class="stage">
+    <aside id="chaos" class="plate" hidden><h2>Chaos<br>progression</h2><div id="meter"></div><div id="points">0 / 120 Chaos Points</div><progress id="chaos-progress" max="120" value="0" aria-label="Chaos progression"></progress></aside>
+    <div id="pilot" aria-hidden="true"><img src="assets/captain-v2.png" alt=""></div>
+    <section class="machine" aria-label="Reels">
+      <div class="machine-head"><span class="lamps">● ● ●</span><span id="ways">4,096 WAYS</span><span class="lamps">● ● ●</span></div>
+      <div class="reels" id="reels"></div>
+      <div class="machine-foot"><i></i><i></i><i></i></div>
+      <img id="beam-ship" src="assets/bonus-3.jpg" alt=""><div id="effect" aria-hidden="true"></div>
+    </section>
+    <aside class="side" aria-label="Scatter Bonus and Bonus Buy">
+      <img id="ufo" src="assets/scatter-ufo.png" alt="">
+      <div id="feature" class="plate"><span id="feature-label">SCATTER BONUS</span><strong id="feature-number" hidden>8</strong><span id="feature-note">3 / 4 / 5+ UFO SCATTERS</span><span id="feature-stage" hidden></span></div><button id="buy-open" class="buy-launch" aria-haspopup="dialog" aria-controls="buy-dialog">BONUS BUY</button>
+    </aside>
+  </div>
+  <p id="status" aria-live="polite">Ready to spin</p>
+  <section class="console" aria-label="Game controls">
+    <div class="tools plate"><button id="info" aria-label="Paytable and rules" class="small">i</button><button id="mute" aria-label="Mute sound" aria-pressed="false" class="small">♪</button></div>
+    <div class="stake plate"><button id="minus" class="small" aria-label="Decrease bet">−</button><div><span>BET</span><strong id="stake">0.20</strong></div><button id="plus" class="small" aria-label="Increase bet">+</button></div>
+    <button id="spin" aria-label="Spin" title="Spin (Space)"><img src="assets/approved-spin.png" alt=""></button>
+    <div class="tools plate"><button id="turbo" aria-label="Turbo" aria-pressed="false" class="small">ϟ</button><button id="auto" aria-label="Autoplay" aria-pressed="false" class="small">A</button></div>
+    <div class="readout plate"><span>WIN</span><strong id="win">0.00</strong></div>
+    <div class="readout plate"><span>BALANCE</span><strong id="balance">10,000.00</strong></div>
+  </section>
+</main>
+<dialog id="intro">
+  <div id="scene"></div><div id="intro-fx" aria-hidden="true"><img class="intro-ship" src="assets/symbols-v2/scatter-ufo.png" alt=""><i class="lever"></i><i class="alarm"></i><i class="intro-beam"></i><img class="debris d1" src="assets/symbols-v2/asteroid.png" alt=""><img class="debris d2" src="assets/symbols-v2/asteroid.png" alt=""></div>
+  <div class="intro-content"><img src="assets/logo.jpg" alt="Toonageddon"><p id="scene-title">Deep Space</p><progress id="progress" value="0" max="100" aria-label="Intro progress"></progress><div id="intro-actions"><button id="enter">Enter game</button><button id="intro-audio" class="small" aria-label="Enable intro sound">♪</button></div></div>
+</dialog>
+<dialog id="buy-dialog" aria-labelledby="buy-title">
+  <header class="buy-header"><div><p>FICTIONAL CREDITS · EXPERIMENTAL</p><h2 id="buy-title">BONUS BUY</h2></div><button id="buy-close" class="small" aria-label="Close Bonus Buy">×</button></header>
+  <p id="buy-wallet"></p><div id="buy-cards"></div>
+  <div id="buy-confirmation" hidden><p id="buy-quote"></p><div class="buy-actions"><button id="buy-back" class="buy-secondary">Cancel</button><button id="buy-confirm" class="buy-launch">Confirm purchase</button></div></div>
+  <p id="buy-feedback" role="status"></p>
+</dialog>
+<div id="mystery-reveal" class="mystery-reveal" hidden role="status"><img src="assets/symbols-v2/scatter-ufo.png" alt=""><p>MYSTERY BONUS</p><div id="mystery-possibilities"></div><strong id="mystery-result"></strong></div>
+<dialog id="panel"><header><h2 id="panel-title"></h2><button id="close" class="small" aria-label="Close">×</button></header><div id="panel-content"></div></dialog>
+<script type="module" src="app.mjs"></script>
+</body>
+</html>
