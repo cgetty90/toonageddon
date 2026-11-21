@@ -2,11 +2,12 @@ import {resolve, SCATTER, EXPAND, WILD} from './engine.mjs';
 import {config} from './math-v2.mjs';
 import {symbols, tiers, v1Config} from './math-v1.mjs';
 import {buyProfile,buyOptions,quoteBuy,resolvePurchase,replayPurchase,settlePurchase} from './bonus-buy.mjs';
+import {anteProfile,anteMultiplier,paidCost} from './ante.mjs';
 import {createAudio} from './audio.mjs';
 const $ = id => document.getElementById(id);
 const assetFile = path => globalThis.__toonAssets?.[path] || path;
 const keys = ['balance','stake','last','active','settings'];
-const settings = {music:.24,effects:.55,mute:false,turbo:false};
+const settings = {music:.24,effects:.55,mute:false,turbo:false,ante:false};
 const wallet = {balance:100000000,stake:20,last:null,active:null,settings};
 const key = 'toonageddon-wallet-3.0.0';
 function readWallet(storageKey=key) {
@@ -46,9 +47,16 @@ function controls(){
   const ready=state==='ready';
   $('spin').disabled=!ready;
   $('buy-open').disabled=!ready;
+  $('ante-open').disabled=!ready;
   $('minus').disabled=!ready||wallet.stake===amounts[0];
   $('plus').disabled=!ready||wallet.stake===amounts.at(-1);
-  $('stake').textContent=money(wallet.stake*100);
+  const ante=wallet.settings.ante;
+  $('ante-open').setAttribute('aria-pressed',String(ante));
+  $('ante-open').querySelector('b').textContent=ante?'ON':'OFF';
+  $('bet-caption').textContent=ante?'TOTAL BET':'BET';
+  $('base-stake').hidden=!ante;
+  $('base-stake').textContent='Base '+money(wallet.stake*100);
+  $('stake').textContent=money(paidCost(wallet.stake,ante));
   $('balance').textContent=money(displayBalance);
   $('auto').setAttribute('aria-pressed',String(autoplay>0));
   $('mute').setAttribute('aria-pressed',String(wallet.settings.mute));
@@ -370,21 +378,25 @@ async function play(existing=null,featurePreview=-1,replay=false,purchase=null){
     });
   }else await playRound(existing,featurePreview,replay,purchase);
 }
+function roundRules(version){
+  return version===anteProfile.version?anteProfile:version===v1Config.version?v1Config:config;
+}
 async function playRound(existing,featurePreview,replay,purchase){
-  if(!purchase&&!existing&&featurePreview<0&&!replay&&wallet.balance<wallet.stake*100){
+  if(!purchase&&!existing&&featurePreview<0&&!replay&&wallet.balance<paidCost(wallet.stake,wallet.settings.ante)){
     autoplay=0; transition('ready'); status('Insufficient fictional credits');return;
   }
   const stake=existing?.stake ?? wallet.stake;
   const seed=existing?.seed ?? crypto.getRandomValues(new Uint32Array(1))[0];
   const featureId=existing?.feature ?? featurePreview;
-  const record={stake,seed,feature:featureId,version:config.version,...(!existing&&purchase?{buy:purchase.id,requestId:purchase.requestId}:{})};
+  const useAnte=!existing&&!purchase&&featureId<0&&wallet.settings.ante;
+  const record={stake,seed,feature:featureId,version:useAnte?anteProfile.version:config.version,...(!existing&&purchase?{buy:purchase.id,requestId:purchase.requestId}:{})};
   let settled=Boolean(existing && !replay);
   try{
     const buy=existing?.buy??record.buy;
     if(!existing&&purchase&&purchase.stake!==stake){
       transition('ready');status('Stake changed. Refresh the Bonus Buy quote.');return;
     }
-    const rules=existing?.version===v1Config.version?v1Config:config;
+    const rules=roundRules(existing?.version??record.version);
     const round=buy?(existing?replayPurchase(existing,{rules}):resolvePurchase(seed,buy,{rules})):resolve(seed,{feature:featureId,rules});
     if(!existing&&buy){
       const result=settlePurchase(wallet.balance,wallet.active,wallet.last,{...record,buyTier:round.tier,featureSeed:round.seed},round.total);
@@ -393,11 +405,16 @@ async function playRound(existing,featurePreview,replay,purchase){
       displayBalance=result.balance-round.total*stake;
       settled=true;
     } else if(!existing && featureId<0){
-      displayBalance=wallet.balance-stake*100;
-      commit({balance:displayBalance+round.total*stake,last:record,active:record});
+      const cost=paidCost(stake,useAnte);
+      const paidRecord={...record,cost};
+      displayBalance=wallet.balance-cost;
+      commit({balance:displayBalance+round.total*stake,last:paidRecord,active:paidRecord});
       settled=true;
     }
-    if(buy==='mystery'&&(!existing||replay))await revealMystery(round.tier);
+    if(buy&&(!existing||replay)){
+      if(buy==='mystery')await revealMystery(round.tier);
+      await showPurchaseScatters(round.tier);
+    }
     await animateRound(round,stake,Boolean(existing&&!replay));
     if(settled)commit({active:null});
     displayBalance=wallet.balance;
@@ -435,7 +452,7 @@ $('settings').onclick=()=>{
   $('replay').onclick=()=>{$('panel').close();audio.unlock();void play(wallet.last,-1,true);};
   $('log').disabled=!wallet.last;
   $('log').onclick=()=>{
-    const rules=wallet.last.version===v1Config.version?v1Config:config;
+    const rules=roundRules(wallet.last.version);
     const data=wallet.last.buy?replayPurchase(wallet.last,{rules}):resolve(wallet.last.seed,{rules});
     const url=URL.createObjectURL(new Blob([JSON.stringify({...data,stake:wallet.last.stake/100,buyCost:wallet.last.buy?wallet.last.cost/10000:undefined},null,2)],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download='toonageddon-'+data.seed+'.json';a.click();
@@ -454,7 +471,7 @@ $('info').onclick=()=>{
     return '<td>'+(min===max?min:min+'–'+max)+' ×'+x+'</td>';
   }).join('')+'</tr>').join('');
   const dropTable='<h3>Wild Drops by stage</h3><table><thead><tr><th>Points</th><th>Regular</th><th>Super</th><th>Super Super</th></tr></thead><tbody>'+dropRows+'</tbody></table>';
-  openPanel('Paytable and rules','<p>Match a paying symbol from reel one across at least three consecutive reels. Each position combination pays. Wild multipliers add within each way.</p><table><thead><tr><th>Symbol</th><th>3 reels</th><th>4 reels</th><th>5 reels</th><th>6 reels</th></tr></thead><tbody>'+values+'</tbody></table><p>Exactly 3 UFO scatters trigger Regular Bonus. Exactly 4 trigger Super Bonus. 5 or more trigger Super Super Bonus. Every tier starts with 8 free spins. Removing a winning position in free spins adds one Chaos Point. At 12, 30, 55, 85 and 120 points, earn two free spins and a Wild Drop. Super Super Bonus has a 100× minimum bonus payout. Super Super stage four has a '+(config.surge.chance*100).toFixed(2)+'% chance to drop '+config.surge.min+'–'+config.surge.max+' actual ×35 wilds when reached. The full round has a 50,000× ceiling.</p>'+dropTable);
+  openPanel('Paytable and rules','<p>Match a paying symbol from reel one across at least three consecutive reels. Each position combination pays. Wild multipliers add within each way.</p><table><thead><tr><th>Symbol</th><th>3 reels</th><th>4 reels</th><th>5 reels</th><th>6 reels</th></tr></thead><tbody>'+values+'</tbody></table><p>Exactly 3 UFO scatters trigger Regular Bonus. Exactly 4 trigger Super Bonus. 5 or more trigger Super Super Bonus. Every tier starts with 8 free spins. Removing a winning position in free spins adds one Chaos Point. At 12, 30, 55, 85 and 120 points, earn two free spins and a Wild Drop. Super Super Bonus has a 100× minimum bonus payout. Super Super stage four has a '+(config.surge.chance*100).toFixed(2)+'% chance to drop '+config.surge.min+'–'+config.surge.max+' actual ×35 wilds when reached. Ante costs three times the base bet and increases natural bonus frequency. The full round has a 50,000× base-bet ceiling.</p>'+dropTable);
 };
 let pendingBuy;
 function clearBuy(){
@@ -551,6 +568,42 @@ $('game').setAttribute('aria-label',config.title);
 document.querySelectorAll('h1 img,.intro-content img').forEach(img=>img.alt=config.title);
 controls();
 
+$('ante-open').onclick=()=>{
+  const active=wallet.settings.ante;
+  const total=money(paidCost(wallet.stake,true));
+  openPanel('Ante Bet','<p>Ante gives each paid spin nearly four times the chance to trigger a bonus. A spin costs '+anteMultiplier+'× the base bet. Winnings, bonus buy prices and the 50,000× ceiling use the base bet.</p><p>Base bet '+money(wallet.stake*100)+' credits · Total with Ante '+total+' credits.</p><button id="ante-confirm" class="buy-launch">'+(active?'Turn Ante off':'Turn Ante on')+'</button>');
+  $('ante-confirm').onclick=()=>{updateSettings({ante:!active});$('panel').close();};
+};
+async function showPurchaseScatters(tier){
+  transition('purchase-entry');
+  status(tiers[tier]+' purchase · Incoming UFO scatters');
+  const board=cells.map((column,c)=>column.map((cell,r)=>{
+    const id=Number(cell.dataset.symbol);
+    return id<SCATTER?id:(c*3+r)%14;
+  }));
+  render(board);
+  const landingOrder=[0,2,4,1,5];
+  for(const c of landingOrder.slice(0,tier+3)){
+    const r=Math.floor(board[c].length/2);
+    const scatter=makeCell(SCATTER);
+    cells[c][r].replaceWith(scatter);
+    cells[c][r]=scatter;
+    scatter.classList.add('purchased-scatter');
+    if(!prefersReduced){
+      const animation=scatter.querySelector('img').animate([
+        {transform:'translateY(-270%) scale(.64)',opacity:0},
+        {transform:'translateY(9%) scale(1.12)',opacity:1,offset:.82},
+        {transform:'translateY(0) scale(1)',opacity:1}
+      ],{duration:wallet.settings.turbo?175:300,easing:'cubic-bezier(.35,.12,.57,1)'});
+      await animation.finished.catch(()=>{});
+    }
+    audio.cue('drop',c);
+    particles([[c,r]],4);
+    await wait(90);
+  }
+  status((tier+3)+' purchased scatters · '+tiers[tier]);
+  await wait(720);
+}
 function ready(){
   transition('ready');
   if(wallet.active){status('Recovering saved round'); void play(wallet.active);}
