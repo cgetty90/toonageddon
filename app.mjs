@@ -67,7 +67,7 @@ function controls(){
 function imageInfo(id) {
   if(id<SCATTER) return [symbols[id][1],symbols[id][0],''];
   if(id===SCATTER) return ['scatter-ufo','Scatter','SCATTER'];
-  if(id===EXPAND) return ['wild-base','Expanding wild','EXPAND'];
+  if(id===EXPAND) return ['wild-base','Expanding wild','EXPAND WILD'];
   const mult=id-WILD;
   return ['wild-base',mult?'Wild ×'+mult:'Wild',mult?'WILD ×'+mult:'WILD'];
 }
@@ -196,18 +196,27 @@ async function spinReels(board){
     reel.append(strip);
     reel.classList.add('in-flight');
     const travel=(final.length+intermediate.length)*cells[c][0].getBoundingClientRect().height;
+    const y=distance=>'translate3d(0,'+distance+'px,0)';
+    const duration=turbo?345+c*21:1010+c*101;
+    const delay=c*(turbo?8:23);
     const animation=strip.animate([
-      {transform:'translateY(-'+travel+'px)',filter:'blur(0px)',offset:0,easing:'cubic-bezier(.68,.02,.83,.6)'},
-      {transform:'translateY(-'+travel*.79+'px)',filter:'blur(2.8px)',offset:.28,easing:'linear'},
-      {transform:'translateY(-'+travel*.12+'px)',filter:'blur(2.8px)',offset:.74,easing:'cubic-bezier(.17,.69,.33,1)'},
-      {transform:'translateY(4px)',filter:'blur(0px)',offset:.94},
-      {transform:'translateY(0)',filter:'blur(0px)',offset:1}
-    ],{duration:turbo?300+c*25:940+c*112,fill:'both'});
+      {transform:y(-travel),filter:'blur(0)',offset:0,easing:'cubic-bezier(.55,0,.76,.63)'},
+      {transform:y(-travel*.82),filter:'blur(2px)',offset:.28,easing:'linear'},
+      {transform:y(-travel*.23),filter:'blur(2px)',offset:.64,easing:'cubic-bezier(.17,.58,.32,1)'},
+      {transform:y(0),filter:'blur(0)',offset:.87,easing:'ease-out'},
+      {transform:y(-3),filter:'blur(0)',offset:.93,easing:'ease-in-out'},
+      {transform:y(0),filter:'blur(0)',offset:1}
+    ],{duration,delay,fill:'both'});
+    const brake=setTimeout(()=>{
+      if(!reel.isConnected)return;
+      reel.classList.add('braking');
+      audio.cue('stop',c);
+    },delay+duration*.87);
     await animation.finished.catch(()=>{});
+    clearTimeout(brake);
     strip.remove();
-    reel.classList.remove('in-flight');
+    reel.classList.remove('in-flight','braking');
     reel.classList.add('impact');
-    audio.cue('stop',c);
   }));
 }
 async function deliverWilds(event){
@@ -575,34 +584,54 @@ $('ante-open').onclick=()=>{
   $('ante-confirm').onclick=()=>{updateSettings({ante:!active});$('panel').close();};
 };
 async function showPurchaseScatters(tier){
+  winCounter(0,true);
   transition('purchase-entry');
+  const game=$('game');
+  const effects=$('effect');
   status(tiers[tier]+' purchase · Incoming UFO scatters');
   const board=cells.map((column,c)=>column.map((cell,r)=>{
     const id=Number(cell.dataset.symbol);
     return id<SCATTER?id:(c*3+r)%14;
   }));
   render(board);
+  game.classList.add('beaming','purchase-flight');
   const landingOrder=[0,2,4,1,5];
-  for(const c of landingOrder.slice(0,tier+3)){
-    const r=Math.floor(board[c].length/2);
-    const scatter=makeCell(SCATTER);
-    cells[c][r].replaceWith(scatter);
-    cells[c][r]=scatter;
-    scatter.classList.add('purchased-scatter');
-    if(!prefersReduced){
-      const animation=scatter.querySelector('img').animate([
-        {transform:'translateY(-270%) scale(.64)',opacity:0},
-        {transform:'translateY(9%) scale(1.12)',opacity:1,offset:.82},
-        {transform:'translateY(0) scale(1)',opacity:1}
-      ],{duration:wallet.settings.turbo?175:300,easing:'cubic-bezier(.35,.12,.57,1)'});
-      await animation.finished.catch(()=>{});
+  try {
+    for(const [i,c] of landingOrder.slice(0,tier+3).entries()){
+      const r=Math.floor(board[c].length/2);
+      const old=cells[c][r];
+      const scatter=makeCell(SCATTER);
+      scatter.classList.add('purchased-scatter');
+      if(!prefersReduced){
+        const area=effects.getBoundingClientRect(), target=old.getBoundingClientRect();
+        const x=target.left+target.width/2-area.left;
+        const y=target.top+target.height/2-area.top;
+        const fromX=area.width/2;
+        const fromY=-Math.min(48,area.height*.11);
+        const flyer=new Image();
+        flyer.src=scatter.querySelector('img').src;
+        flyer.alt='';
+        flyer.className='purchase-flyer';
+        flyer.style.width=Math.min(target.width*.84,target.height*.94)+'px';
+        effects.append(flyer);
+        audio.cue('scatterLaunch',i);
+        try {
+          await flyer.animate([
+            {transform:'translate3d('+fromX+'px,'+fromY+'px,0) translate(-50%,-50%) scale(.38)',opacity:.18},
+            {transform:'translate3d('+x+'px,'+y+'px,0) translate(-50%,-50%) scale(1.16)',opacity:1,offset:.84},
+            {transform:'translate3d('+x+'px,'+y+'px,0) translate(-50%,-50%) scale(1)',opacity:1}
+          ],{duration:wallet.settings.turbo?225:395,easing:'cubic-bezier(.32,.15,.63,1)',fill:'both'}).finished.catch(()=>{});
+        }finally{flyer.remove();}
+      }
+      old.replaceWith(scatter);
+      cells[c][r]=scatter;
+      audio.cue('scatterLand',i);
+      particles([[c,r]],6);
+      await wait(75);
     }
-    audio.cue('drop',c);
-    particles([[c,r]],4);
-    await wait(90);
-  }
-  status((tier+3)+' purchased scatters · '+tiers[tier]);
-  await wait(720);
+    status((tier+3)+' purchased scatters · '+tiers[tier]);
+    await new Promise(done=>setTimeout(done,prefersReduced?410:wallet.settings.turbo?640:900));
+  }finally{game.classList.remove('beaming','purchase-flight');}
 }
 function ready(){
   transition('ready');

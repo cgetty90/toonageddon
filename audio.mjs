@@ -13,9 +13,9 @@ export function createAudio(settings) {
     voice.connect(env).connect(bus);
     voice.start(time);voice.stop(time+duration+.01);
   }
-  function texture(dur,low,high,volume,pan=0){
+  function texture(dur,low,high,volume,pan=0,delay=0){
     if(!noise)return;
-    const now=ctx.currentTime+.005;
+    const now=ctx.currentTime+.005+delay;
     const source=ctx.createBufferSource(), filter=ctx.createBiquadFilter(), level=ctx.createGain(), space=ctx.createStereoPanner();
     source.buffer=noise;
     filter.type='bandpass';filter.Q.value=.83;
@@ -65,6 +65,7 @@ export function createAudio(settings) {
     }catch{}
   }
   const cues={
+    scatterLaunch:[45,57],scatterLand:[52,64,76],
     ambience:[31,43,50],alarm:[63,75,63],spin:[36,42,48],stop:[48],scatter:[63,70,75],expand:[50,62,74],win:[64,68,71,76],burst:[54,36],
     tumble:[74,66,55],bonus:[48,55,60,67,72],milestone:[67,72,76,84],beam:[38,49,63],drop:[56,43,68],
     large:[60,64,67,72,76,79],cap:[48,55,60,64,67,72,76,79,84]
@@ -72,15 +73,27 @@ export function createAudio(settings) {
   function cue(name,variant=0){
     if(!ctx||ctx.state!=='running'||settings().mute||!cues[name])return;
     const now=ctx.currentTime+.01;
-    if(name==='spin')texture(.49,270,1800,.098);
-    if(name==='stop')texture(.085,940,190,.12,(variant-2.5)/3);
+    if(name==='spin'){
+      texture(.33,220,1750,.078);
+      texture(.73,410,1200,.051,0,.16);
+      tone(29,now,.54,.066,effects,'triangle',43);
+    }
+    if(name==='stop'){
+      texture(.072,1650,220,.12,(variant-2.5)/3);
+      tone(34+variant,now,.095,.092,effects,'sine',25+variant);
+    }
+    if(name==='scatterLaunch')texture(.19,420,2800,.078,(variant-2)/3);
+    if(name==='scatterLand'){
+      texture(.12,2700,510,.10,(variant-2)/3);
+      tone(39+variant,now,.18,.094,effects,'sine',30);
+    }
     if(name==='burst')texture(.26,1720,110,.15);
     if(name==='tumble')texture(.19,250,116,.075);
     if(name==='expand')texture(.41,540,3700,.073);
     if(name==='beam')texture(.35,140,2200,.11);
     if(name==='drop')texture(.29,1300,340,.13);
     if(name==='alarm')texture(.31,230,1800,.06);
-    const low=['burst','spin','beam','stop'].includes(name);
+    const low=['burst','spin','beam','stop','scatterLaunch'].includes(name);
     cues[name].forEach((n,i)=>tone(n+variant,now+i*.055,low?.17:.26,low?.11:.065,effects,low?'triangle':'sine',low?n-9:n+variant));
   }
   addEventListener('pagehide',()=>{if(interval)clearInterval(interval);});
