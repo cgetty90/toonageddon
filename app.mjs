@@ -308,7 +308,7 @@ async function animateRound(round,stake,fast){
         featurePanel(e.tier,e.remaining,scatterCount);
         status(tiers[e.tier]+' activated · 8 free spins');
         if(!fast)audio.cue('bonus',e.tier);
-        await wait(1650+e.tier*300,fast);
+        if(!round.purchaseId)await wait(1650+e.tier*300,fast);
         break;
       case 'points':
         shownPoints=e.points;
