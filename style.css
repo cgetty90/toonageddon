@@ -243,17 +243,8 @@ h1 img,.intro-content img{mask-image:linear-gradient(to bottom,transparent,#000 
 .buy-card button{align-self:end;font-size:.84rem;width:100%;margin-top:4px}
 #buy-confirmation{padding:15px 0;color:#ecf2ff}
 .buy-actions{display:flex;gap:10px}#buy-feedback:empty{display:none}
-.mystery-reveal{position:fixed;z-index:50;inset:0;display:grid;align-content:center;justify-items:center;gap:12px;background:radial-gradient(ellipse at 50% 35%,#4f136bd9,#060820ed 70%),url(assets/intro-space.jpg) center/cover;color:#fff;pointer-events:none}
-.mystery-reveal img{width:clamp(150px,29vw,370px);margin:-30px auto -32px;filter:drop-shadow(0 0 30px #d856ff);animation:mystery-arrival 1s ease-out both}
-.mystery-reveal p{font:900 italic clamp(1.9rem,7.5vw,5.7rem)/1 Arial,sans-serif;margin:0;color:#ffdc53;text-shadow:0 3px 0 #891e01,0 0 25px #f66823}
-#mystery-possibilities{display:flex;max-width:92vw;justify-content:center;flex-wrap:wrap;gap:9px}
-#mystery-possibilities span{padding:8px 12px;border:1px solid #9a45e5;background:#12093f;font-size:.85rem;font-weight:bold}
-#mystery-possibilities .selected{border-color:#baff38;background:#223f0f;box-shadow:0 0 22px #8cfe3f;color:#dbff89}
-#mystery-result{min-height:1.2em;color:#d9ff55;font-size:clamp(1.35rem,5vw,3.1rem);text-shadow:0 0 21px #a5ed00}
-@keyframes mystery-arrival{0%{transform:translateY(-30vh) scale(.45);opacity:.1}70%{transform:translateY(4px) scale(1.08)}100%{transform:none;opacity:1}}
 @media(max-width:900px){.machine{border-width:10px}.reel{border-width:8px}.console .plate,.side .plate,#chaos{border-width:10px}.machine-head::before,.machine-head::after{width:55px;top:-16px}.stage{gap:6px}}
 @media(max-width:620px){#game{--slot:clamp(37px,6.25vh,62px);padding:8px;gap:5px}#game>header{height:auto;margin:0}#game>header::after{display:none}#game>header h1 img{opacity:1}#game .topline{position:static}#game .modeplate{position:static;transform:none;width:max-content;margin:1px auto 6px}#game::before{background-size:auto 64%}.stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.reel{border-width:4px}.machine{border-width:8px}.machine::after{display:none}.machine-head::before,.machine-head::after{width:37px;top:-12px;height:23px}.side{max-width:none}.side #feature{padding:1px 3px}.side #feature-note{display:flex;gap:6px}.side #feature-note br{display:contents}.side .plate,#chaos{border-width:7px}.side #buy-open{min-height:31px;padding:4px;font-size:.76rem}.console{grid-template-columns:1fr 1fr 66px 1fr}.console .plate{min-height:42px;border-width:7px}.console .stake{min-width:0}#spin{width:66px;height:66px}#pilot{display:none}.buy-header h2{font-size:1.7rem}#buy-dialog{padding:8px;border-width:9px}#buy-cards{grid-template-columns:minmax(0,1fr);gap:7px}.buy-card{grid-template-columns:62px minmax(0,1fr) minmax(80px,auto);grid-template-rows:repeat(3,auto);gap:4px 7px;text-align:left;justify-items:start;padding:6px}.buy-card img{grid-row:1/4;width:62px;height:62px;align-self:center}.buy-card h3,.buy-card p,.buy-spins{grid-column:2}.buy-card strong,.buy-card small,.buy-card button{grid-column:3;justify-self:stretch;text-align:center}.buy-card strong{grid-row:1;font-size:.88rem}.buy-card small{grid-row:2;font-size:.61rem}.buy-card button{grid-row:3;font-size:.65rem;line-height:1;min-height:30px;padding:3px}.buy-card p{font-size:.65rem}.buy-spins{font-size:.59rem}}
-@media(prefers-reduced-motion:reduce){.mystery-reveal img{animation:none}}
 
 
 @media(min-width:901px){
@@ -267,13 +258,10 @@ h1 img,.intro-content img{mask-image:linear-gradient(to bottom,transparent,#000 
 }
 #feature-note>span{display:block}
 button{-webkit-tap-highlight-color:transparent}
-.mystery-reveal::before{content:'';position:absolute;z-index:-1;inset:10% 13%;background:radial-gradient(ellipse at 50% 35%,#da54fa50,#3612ba35 37%,transparent 66%);animation:mystery-charge 1.37s ease-out both}
-@keyframes mystery-charge{from{opacity:0;transform:scale(.35)}to{opacity:1;transform:scale(1.2)}}
 @media(max-width:620px){
   #game:not([data-tier]) .side #feature-note{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;font-size:.58rem}
   #game:not([data-tier]) .side #feature-note span{border-left:1px solid #5975a9;padding-left:4px}
 }
-@media(prefers-reduced-motion:reduce){.mystery-reveal::before{animation:none}}
 
 /* Native-pixel artwork fitted to each live cell. */
 .cell{--symbol-gap:3px;isolation:isolate;min-width:0;min-height:0;background:

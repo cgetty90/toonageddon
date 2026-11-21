@@ -420,10 +420,7 @@ async function playRound(existing,featurePreview,replay,purchase){
       commit({balance:displayBalance+round.total*stake,last:paidRecord,active:paidRecord});
       settled=true;
     }
-    if(buy&&(!existing||replay)){
-      if(buy==='mystery')await revealMystery(round.tier);
-      await showPurchaseScatters(round.tier);
-    }
+    if(buy&&(!existing||replay))await showPurchaseScatters(round.tier);
     await animateRound(round,stake,Boolean(existing&&!replay));
     if(settled)commit({active:null});
     displayBalance=wallet.balance;
@@ -531,21 +528,6 @@ $('buy-confirm').onclick=()=>{
   audio.unlock();
   void play(null,-1,false,purchase);
 };
-async function revealMystery(tier){
-  transition('mystery');
-  const screen=$('mystery-reveal');
-  const options=$('mystery-possibilities');
-  options.replaceChildren(...tiers.map(name=>Object.assign(document.createElement('span'),{textContent:name})));
-  $('mystery-result').textContent='';
-  screen.hidden=false;
-  audio.cue('beam',2);
-  await new Promise(done=>setTimeout(done,prefersReduced?60:1370));
-  options.children[tier].classList.add('selected');
-  $('mystery-result').textContent=tiers[tier];
-  audio.cue('bonus',tier);
-  await new Promise(done=>setTimeout(done,prefersReduced?60:1430));
-  screen.hidden=true;
-}
 $('close').onclick=()=>$('panel').close();
 $('spin').onclick=()=>{audio.unlock();void play();};
 $('mute').onclick=()=>{audio.unlock();updateSettings({mute:!wallet.settings.mute});};
@@ -588,7 +570,7 @@ async function showPurchaseScatters(tier){
   transition('purchase-entry');
   const game=$('game');
   const effects=$('effect');
-  status(tiers[tier]+' purchase · Incoming UFO scatters');
+  status('Incoming UFO scatters');
   const board=cells.map((column,c)=>column.map((cell,r)=>{
     const id=Number(cell.dataset.symbol);
     return id<SCATTER?id:(c*3+r)%14;
